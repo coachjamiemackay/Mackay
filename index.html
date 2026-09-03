@@ -2,6 +2,60 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
+<!-- ============================================================
+     jamiemackay.nl — GA4 + CTA click tracking
+     Place this block inside the outer <head> of index.html,
+     directly after <meta charset="utf-8">.
+     Replace G-2MEW3KF2N4 (2x) with the real measurement ID.
+     Source of truth: ~/dev/jamie/website/tracking/ga4-head-snippet.html
+     ============================================================ -->
+<script>
+  // Only measure the real site. Staging (jamie.martijndefrankrijker.nl),
+  // localhost and previews would otherwise pollute Jamie's numbers.
+  // Append ?ga_debug=1 to the URL to force it on anywhere, for testing.
+  window.__gaEnabled = /(^|\.)jamiemackay\.nl$/i.test(location.hostname) || /[?&]ga_debug=1/.test(location.search);
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  if (window.__gaEnabled) {
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-2MEW3KF2N4';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-2MEW3KF2N4');
+  }
+
+  // Both calls to action leave the site (Calendly, WhatsApp), so the
+  // click itself is the conversion. One listener on document, in the
+  // capture phase, so it works no matter what React renders or stops.
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+    var link = target && target.closest ? target.closest('a[href]') : null;
+    if (!link) return;
+
+    var href = link.href || '';
+    var cta = /calendly\.com/i.test(href) ? 'calendly'
+            : /(^|\/\/)(wa\.me|api\.whatsapp\.com|web\.whatsapp\.com)/i.test(href) ? 'whatsapp'
+            : null;
+    if (!cta) return;
+
+    gtag('event', 'cta_click', {
+      cta: cta,
+      link_url: href,
+      link_text: ((link.textContent || '').trim() || link.getAttribute('aria-label') || '').slice(0, 100),
+      page_language: (function () {
+        // <html> carries no lang attribute (checked on the live page,
+        // 28 Aug 2026), so reading it always yielded '' and GA4 dropped
+        // the parameter. The NL/EN toggle keeps the choice in
+        // localStorage under 'jm-lang' and defaults to 'nl'.
+        var l = document.documentElement.lang;
+        if (!l) { try { l = localStorage.getItem('jm-lang'); } catch (e) {} }
+        return l === 'nl' || l === 'en' ? l : 'nl';
+      })()
+    });
+  }, true);
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Personal Trainer Apeldoorn | Personal Training by Jamie Mackay</title>
 <meta name="description" content="Personal training in Apeldoorn for busy professionals. Evidence-based strength and fat loss coaching with Jamie Mackay. Book your free consultation today.">
